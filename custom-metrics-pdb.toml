@@ -1,9 +1,9 @@
 [[metric]]
-context = "order_count"
+context = "order_gauge"
 request = '''
-select count(*) as order_total from soe.orders
+select count(*) as order_no from orders where order_Date > (CURRENT_TIMESTAMP - interval '1' minute)
 '''
-labels = ["stat_name"]
-metricsdesc = { order_total="counter metric total number of orders" }
-metricstype = { order_total = "counter" }
+labels = []
+metricsdesc = { order_no="gauge metric number of orders per 60 sec" }
+metricstype = { order_total = "gauge" }
 ignorezeroresult = true
