@@ -1,0 +1,129 @@
+[[metric]]
+request = '''
+select stat_name, value/1000000 as stm_value_sec_total from v$sys_time_model
+'''
+context = "sys_model"
+labels = ["stat_name"]
+metricsdesc = { stm_value_sec_total="counter metric value column from sys_time_model view" }
+metricstype = { stm_value_sec_total = "counter" }
+ignorezeroresult = true
+
+
+[[metric]]
+request = '''
+    select sql_id, wait_class, w, cnt_count, totalsum from (
+    select sql_id, wait_class, w, dense_rank() over (order by w desc) r, cnt_count, totalsum from (
+    select sql_id,
+    decode(session_state,'WAITING',wait_class,'ON CPU') wait_class,
+    sum(count(*)) over (partition by sql_id) / sum(count(*)) over () w,
+    count(*) cnt_count,
+    sum(count(*)) over () totalsum
+    from v$active_session_history
+    where sample_time > sysdate - 15/24/60/60
+    group by sql_id,
+            decode(session_state,'WAITING',wait_class,'ON CPU')
+    )
+    where sql_id is not null
+    )
+    where r<=5
+    order by w desc
+'''
+context = "ash"
+labels = ["sql_id","wait_class"]
+metricstype = { cnt_count = "gauge", w = "gauge", totalsum = "gauge" }
+metricsdesc = { cnt_count = "gauge waitclass count", w = "gauge ratio", totalsum = "gauge total" }
+ignorezeroresult = true
+
+
+[[metric]]
+context = "event_hist"
+request = '''
+select event,
+sum(ms1) ms1,
+sum(ms2) ms2,
+sum(ms4) ms4,
+sum(ms8) ms8,
+sum(ms16) ms16,
+sum(ms32) ms32,
+sum(ms64) ms64,
+sum(ms128) ms128,
+sum(ms256) ms256,
+sum(ms512) ms512,
+sum(ms1024) ms1024,
+sum(ms2048) ms2048,
+sum(msinf) msinf,
+sum(wait_count) count,
+max(sys_time_waited) data
+from (
+select a.event,
+case when a.wait_time_milli <= 1 then wait_count else 0 end as ms1,
+case when a.wait_time_milli <= 2 then wait_count else 0 end as ms2,
+case when a.wait_time_milli <= 4 then wait_count else 0 end as ms4,
+case when a.wait_time_milli <= 8 then wait_count else 0 end as ms8,
+case when a.wait_time_milli <= 16 then wait_count else 0 end as ms16,
+case when a.wait_time_milli <= 32 then wait_count else 0 end as ms32,
+case when a.wait_time_milli <= 64 then wait_count else 0 end as ms64,
+case when a.wait_time_milli <= 128 then wait_count else 0 end as ms128,
+case when a.wait_time_milli <= 256 then wait_count else 0 end as ms256,
+case when a.wait_time_milli <= 512 then wait_count else 0 end as ms512,
+case when a.wait_time_milli <= 1024 then wait_count else 0 end as ms1024,
+case when a.wait_time_milli <= 2048 then wait_count else 0 end as ms2048,
+case when a.wait_time_milli <= 2222222222222 then wait_count else 0 end as msinf,
+wait_count,
+s.time_waited sys_time_waited
+from v$event_histogram a, v$system_event s where s.event = a.event and s.wait_class in ('User I/O','System I/O','Other')
+)
+group by event
+'''
+metricsdesc = { data = "Histogram - sum total of all values in the data field." }
+metricstype = { data = "histogram" }
+labels = [ "event" ]
+metricsbuckets = { data = { ms1 = "1", ms2 = "2", ms4 = "4", ms8 = "8", ms16 = "16", ms32 = "32", ms64 = "64", ms128 = "128", ms256 = "256", ms512 = "512", ms1024 = "1024", ms2048 = "2048"} }
+
+
+[[metric]]
+context = "system_wait_class"
+labels = ["wait_class","con_id"]
+metricsdesc = { time_waited_sec_total="counter metric from system_wait_class view in Oracle.", total_waits_total="counter metric from system_wait_class view in Oracle." }
+request = '''
+select
+m.wait_class as wait_class,
+round(m.time_waited/100,3) as time_waited_sec_total,
+m.total_waits as total_waits_total,
+con_id
+from
+v$system_wait_class m
+where wait_class <> 'Idle'
+'''
+metricstype = { time_waited_sec_total = "counter", total_waits_total = "counter" }
+ignorezeroresult = true
+
+
+[[metric]]
+context = "system_stats"
+labels = ["name"]
+metricsdesc = { value_total="counter metric sysstat" }
+request = '''
+select name, value as value_total from v$sysstat where name in ('physical reads','db block gets','consistent gets', 'redo size', 'redo writes','DBWR undo block writes','undo change vector size',
+'transaction tables consistent reads - undo records applied','data blocks consistent reads - undo records applied','rollback changes - undo records applied')
+'''
+metricstype = { value_total = "counter" }
+ignorezeroresult = true
+
+[[metric]]
+context = "system_wait_event"
+labels = ["wait_class","con_id","event"]
+metricsdesc = { time_waited_sec_total="counter metric from system_wait_class view in Oracle.", total_waits_total="counter metric from system_wait_class view in Oracle." }
+request = '''
+select
+event,
+m.wait_class as wait_class,
+round(m.time_waited/100,3) as time_waited_sec_total,
+m.total_waits as total_waits_total,
+con_id
+from
+v$system_event m
+where wait_class <> 'Idle'
+'''
+metricstype = { time_waited_sec_total = "counter", total_waits_total = "counter" }
+ignorezeroresult = true

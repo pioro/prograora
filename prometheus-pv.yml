@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: prometheus-pv
+spec:
+  storageClassName: "oci-bv"
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: blockvolume.csi.oraclecloud.com
+    volumeHandle: ocid1.volume.oc1.eu-frankfurt-1.abtheljta6mhvu4h47rhfo4lmvdqcd36oh5hvfghblx3uhhq5zbewru7npoa

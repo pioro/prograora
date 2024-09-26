@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-svc
+  namespace: grafana
+  annotations:
+    oci.oraclecloud.com/load-balancer-type: "lb"
+    service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "15"
+spec:
+  ports:
+    - port: 9090
+      protocol: TCP
+      targetPort: 9090
+  selector:
+    app: prometheus-server
+  sessionAffinity: None
+  type: LoadBalancer

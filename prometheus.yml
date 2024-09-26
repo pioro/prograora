@@ -1,0 +1,48 @@
+global:
+  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+    monitor: 'codelab-monitor'
+
+
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+
+    static_configs:
+      - targets: ['localhost:9090']
+
+
+  - job_name: 'cdb19'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 15s
+
+    static_configs:
+      - targets: ['metrics-svc-cdb19.grafana.svc.cluster.local:9161']
+
+  - job_name: 'pdb1'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 30s
+    # timeout
+    scrape_timeout: 30s
+
+    static_configs:
+      - targets: ['metrics-svc-pdb1.grafana.svc.cluster.local:9161']
+
+  - job_name: 'siteahost'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 15s
+
+    static_configs:
+      - targets: ['siteahost.dbsystem.ptk8s.oraclevcn.com:9100']

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics-svc-cdb19
+  namespace: grafana
+  labels:
+    app: metrics-exporter-cdb19
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9161
+      name: metrics
+      targetPort: 9161
+  selector:
+    app: metrics-exporter-cdb19

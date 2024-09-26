@@ -1,0 +1,9 @@
+[[metric]]
+context = "order_count"
+request = '''
+select count(*) as order_total from soe.orders
+'''
+labels = ["stat_name"]
+metricsdesc = { order_total="counter metric total number of orders" }
+metricstype = { order_total = "counter" }
+ignorezeroresult = true
