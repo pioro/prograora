@@ -1,0 +1,70 @@
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: grafana-auto-pvc
+#   namespace: grafana
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi
+# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana-auto
+  name: grafana-auto
+  namespace: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana-auto
+  template:
+    metadata:
+      labels:
+        app: grafana-auto
+    spec:
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+          - 0
+      volumes:
+      - name: grafana-config-volume
+        configMap:
+          name: grafana-config
+          items:
+          - key: grafana.ini
+            path: grafana.ini
+          - key: default.yaml
+            path: provisioning/datasources/default.yaml
+          - key: dashboard.yml
+            path: provisioning/dashboards/dashboard.yml
+          - key: dashboard.json
+            path: provisioning/dashboards/dashboard.json
+          - key: database.json
+            path: provisioning/dashboards/database.json
+          - key: SQL.json
+            path: provisioning/dashboards/SQL.json
+          - key: DBevents.json
+            path: provisioning/dashboards/DBevents.json
+          - key: sizing.json
+            path: provisioning/dashboards/sizing.json
+      # - name: grafana-pv
+      #   persistentVolumeClaim:
+      #     claimName: grafana-auto-pvc
+      containers:
+      - name: grafana-auto
+        image: grafana/grafana
+        imagePullPolicy: IfNotPresent # Always
+        ports:
+        - containerPort: 3000
+          name: http
+        volumeMounts:
+          # - mountPath: /var/lib/grafana
+          #   name: grafana-pv
+          - name: grafana-config-volume
+            mountPath: /etc/grafana/
