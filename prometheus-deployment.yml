@@ -62,7 +62,6 @@ spec:
           args:
             - "--config.file=/etc/prometheus/prometheus.yml"
             - "--storage.tsdb.path=/prometheus/"
-            - "--storage.tsdb.retention=90d"
           ports:
             - containerPort: 9090
           resources:
